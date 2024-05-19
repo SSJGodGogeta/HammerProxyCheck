@@ -8,9 +8,45 @@ namespace HammerProxyCheck
         #region Base
 
         private static readonly string
-            Folder = Path.Combine("C:", "Users", "arman", "Downloads", "LogsToCheckForProxy");
+            Folder = Directory.GetCurrentDirectory() + @"\LogsForProxyCheck\";
 
-        private static bool _debug;
+        private static void DirectoryCheck()
+        {
+            if (!Directory.Exists(Folder)) Directory.CreateDirectory(Folder);
+            if (Directory.Exists(Folder) && Directory.GetFiles(Folder).Length > 0)
+            {
+                Console.WriteLine($"Going to PERMANENTLY delete old RagePluginHook.logs from: {Folder}\nPlease reply with Y if you want me to do that. Otherwise reply with N");
+                switch (Console.ReadKey().Key)
+                {
+                    case ConsoleKey.Y:
+                        foreach (var file in Directory.GetFiles(Folder))
+                        {
+                            if (!Regex.IsMatch(file, "RagePluginHook.*.log")) continue;
+                            if (_detailMode)
+                            {
+                                Console.WriteLine($"Deleting {file}");
+                            }
+                            File.Delete(file);
+                        }
+                        Console.WriteLine($"Files deleted successfully!\nYou now have time to add your new RagePluginHook.logs into {Folder}\nOnce finished, press Enter to continue");
+                        while (Console.ReadKey().Key != ConsoleKey.Enter)
+                        {
+                            Console.WriteLine("\nYou pressed the wrong key. Press 'Enter' key to continue...");
+                        }
+                        Console.WriteLine("\nYou pressed 'Enter' key. Continuing...");
+                        break;
+                    case ConsoleKey.N:
+                        Console.WriteLine("No files were deleted");
+                        break;
+                    default:
+                        Console.WriteLine("Invalid Input. Please answer with Y/N");
+                        DirectoryCheck();
+                        break;
+                }
+            }
+        }
+
+        private static bool _detailMode;
 
         private static string? ReadFile(string filePath)
         {
@@ -99,14 +135,14 @@ namespace HammerProxyCheck
 
         private static void ConsoleSettings()
         {
-            Console.WriteLine("DEBUG Mode? Answer with Y/N");
-            switch (Console.ReadLine())
+            Console.WriteLine("Detail Mode? Answer with Y/N");
+            switch (Console.ReadKey().Key)
             {
-                case "Y" or "y":
-                    _debug = true;
+                case ConsoleKey.Y:
+                    _detailMode = true;
                     break;
-                case "N" or "n":
-                    _debug = false;
+                case ConsoleKey.N:
+                    _detailMode = false;
                     break;
                 default:
                     Console.WriteLine("Invalid Input. Please answer with Y/N");
@@ -119,11 +155,7 @@ namespace HammerProxyCheck
 
         #endregion
 
-        private static MatchedPattern GetLogPath(string fileContent, string log)
-        {
-            var matchedPattern = RegexMatch(log, fileContent, @"Log path: (.+)", 1);
-            return matchedPattern;
-        }
+        #region Checks
 
         private static List<MatchedPattern> IsLogValid(string fileContent, string log)
         {
@@ -151,7 +183,7 @@ namespace HammerProxyCheck
                 matchedPattern8
             ];
 
-            if (_debug)
+            if (_detailMode)
             {
                 if (matchedPattern is { IsMatch: true, LogMatch.Count: 1 })
                 {
@@ -311,10 +343,12 @@ namespace HammerProxyCheck
             return listOfMatchedPatterns;
         }
 
+        #region Character
+
         private static void GetCharacters(string fileContent, string log)
         {
             var matchedPattern = RegexMatch(log, fileContent, "Adding (.+) as character", 1, true);
-            if (_debug)
+            if (_detailMode)
             {
                 Console.WriteLine(matchedPattern.LogMatch.Count > 0
                     ? $"✅ Found the following characters in log:"
@@ -369,7 +403,7 @@ namespace HammerProxyCheck
             }
 
             bool changesDetected = false;
-            if (!_debug)
+            if (!_detailMode)
             {
                 foreach (var entry in characterLogs)
                 {
@@ -419,6 +453,10 @@ namespace HammerProxyCheck
             }
         }
 
+        #endregion
+
+        #region LogPath
+
         private static void HasLogPathChanged(List<MatchedPattern> logPaths)
         {
             var logPathLogs = new Dictionary<string, List<string>>();
@@ -440,7 +478,7 @@ namespace HammerProxyCheck
             }
 
             bool changesDetected = false;
-            if (!_debug)
+            if (!_detailMode)
             {
                 foreach (var entry in logPathLogs)
                 {
@@ -486,9 +524,20 @@ namespace HammerProxyCheck
             }
         }
 
+        private static MatchedPattern GetLogPath(string fileContent, string log)
+        {
+            var matchedPattern = RegexMatch(log, fileContent, @"Log path: (.+)", 1);
+            return matchedPattern;
+        }
+
+        #endregion
+
+        #endregion
+
         private static void Main()
         {
             ConsoleSettings();
+            DirectoryCheck();
             var logs = GetLogs(Folder);
             var allCharacters = new List<MatchedPattern>();
             var logPaths = new List<MatchedPattern>();
