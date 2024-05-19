@@ -119,6 +119,12 @@ namespace HammerProxyCheck
 
         #endregion
 
+        private static MatchedPattern GetLogPath(string fileContent, string log)
+        {
+            var matchedPattern = RegexMatch(log, fileContent, @"Log path: (.+)", 1);
+            return matchedPattern;
+        }
+
         private static List<MatchedPattern> IsLogValid(string fileContent, string log)
         {
             var matchedPattern = RegexMatch(log, fileContent, "Started new log on (\\d+\\W\\d+\\W\\d+)", 1);
@@ -319,8 +325,6 @@ namespace HammerProxyCheck
                     Console.WriteLine(character);
                 }
             }
-
-            Console.WriteLine();
         }
 
         private static List<MatchedPattern> GetCharacters(List<string> logs)
@@ -350,7 +354,6 @@ namespace HammerProxyCheck
         private static void HasCharacterChanged(List<MatchedPattern> matchedPatterns)
         {
             var characterLogs = new Dictionary<HashSet<string>, List<string>>(HashSet<string>.CreateSetComparer());
-
             foreach (var pattern in matchedPatterns)
             {
                 var characterSet = new HashSet<string>(pattern.LogMatch);
@@ -366,12 +369,10 @@ namespace HammerProxyCheck
             }
 
             bool changesDetected = false;
-            
             if (!_debug)
             {
                 foreach (var entry in characterLogs)
                 {
-                    var characterSet = entry.Key;
                     var logs = entry.Value;
 
                     if (logs.Count > 1)
@@ -405,66 +406,146 @@ namespace HammerProxyCheck
                         Console.WriteLine($"- {character}");
                     }
 
-                    Console.WriteLine("Affected logs:");
+                    Console.WriteLine("In File:");
                     foreach (var log in logs)
                     {
                         Console.WriteLine($"- {log}");
                     }
                 }
+
                 Console.WriteLine(!changesDetected
                     ? "\n✅ No character changes detected across logs."
                     : "\n❗ Character changes were detected");
             }
         }
 
-
-        private static void Main()
+        private static void HasLogPathChanged(List<MatchedPattern> logPaths)
+        {
+            var logPathLogs = new Dictionary<string, List<string>>();
+            foreach (var pattern in logPaths)
             {
-                ConsoleSettings();
-                var logs = GetLogs(Folder);
-                var allCharacters = new List<MatchedPattern>();
-
-                if (logs != null)
+                if (pattern.IsMatch)
                 {
-                    if (logs.Count == 0)
+                    var logPath = pattern.LogMatch.First();
+
+                    if (logPathLogs.TryGetValue(logPath, out var logs))
                     {
-                        Console.WriteLine($"❌ There are no Logs in the Directory: {Folder}");
-                        return;
+                        logs.Add(pattern.Log);
+                    }
+                    else
+                    {
+                        logPathLogs[logPath] = new List<string> { pattern.Log };
+                    }
+                }
+            }
+
+            bool changesDetected = false;
+            if (!_debug)
+            {
+                foreach (var entry in logPathLogs)
+                {
+                    var logs = entry.Value;
+
+                    if (logs.Count > 1)
+                    {
+                        continue; // Ignore log paths that appear in only one log
                     }
 
+                    changesDetected = true;
+                }
+
+                Console.WriteLine(!changesDetected
+                    ? "\n✅ No log path changes detected across logs."
+                    : "\n❗ Log path changes were detected");
+            }
+            else
+            {
+                foreach (var entry in logPathLogs)
+                {
+                    var logPath = entry.Key;
+                    var logs = entry.Value;
+
+                    if (logs.Count > 1)
+                    {
+                        continue; // Ignore log paths that appear in only one log
+                    }
+
+                    changesDetected = true;
+                    Console.WriteLine($"❗ Found different Log path:\n- {logPath}");
+
+                    Console.WriteLine("In File:");
                     foreach (var log in logs)
                     {
-                        var fileContent = ReadFile(log);
-                        if (fileContent != null)
-                        {
-                            // IS LOG VALID CHECK
-                            ////////////////////////////////////////////////////////////////////////////////////////////////
-                            Console.WriteLine("Checking Log file:\t" + log);
-                            var matchedPatterns = IsLogValid(fileContent, log);
-                            var isLogValid = 0;
-                            foreach (var matchedPattern in matchedPatterns)
-                            {
-                                if (matchedPattern is { IsMatch: true, LogMatch.Count: 1 }) isLogValid++;
-                            }
-
-                            Console.WriteLine(isLogValid == matchedPatterns.Count
-                                ? $"✅ Log: {log} has not been modified"
-                                : $"❌ Log {log} has been modified");
-
-                            // LSPDFR CHARACTERS CHECK
-                            ////////////////////////////////////////////////////////////////////////////////////////////////
-                            GetCharacters(fileContent, log);
-                            allCharacters.AddRange(GetCharacters(new List<string> { log }));
-                        }
-                        else Console.WriteLine($"❌ Failed to read file: {log}\nfileContent was null");
+                        Console.WriteLine($"- {log}");
                     }
-                    // Check if characters have changed
-                    HasCharacterChanged(allCharacters);
                 }
-                else
+
+                Console.WriteLine(!changesDetected
+                    ? "\n✅ No log path changes detected across logs."
+                    : "\n❗ Log path changes were detected in the logs listed above.");
+            }
+        }
+
+        private static void Main()
+        {
+            ConsoleSettings();
+            var logs = GetLogs(Folder);
+            var allCharacters = new List<MatchedPattern>();
+            var logPaths = new List<MatchedPattern>();
+
+            if (logs != null)
+            {
+                if (logs.Count == 0)
                 {
-                    Console.WriteLine("❌ GetLogs returned null");
+                    Console.WriteLine($"❌ There are no Logs in the Directory: {Folder}");
+                    return;
                 }
+
+                foreach (var log in logs)
+                {
+                    var fileContent = ReadFile(log);
+                    if (fileContent != null)
+                    {
+                        // IS LOG VALID CHECK
+                        ////////////////////////////////////////////////////////////////////////////////////////////////
+                        Console.WriteLine("Checking Log file:\t" + log);
+                        var matchedPatterns = IsLogValid(fileContent, log);
+                        int isLogValid = 0;
+                        foreach (var matchedPattern in matchedPatterns)
+                        {
+                            if (matchedPattern is { IsMatch: true, LogMatch.Count: 1 }) isLogValid++;
+                        }
+
+                        GetCharacters(fileContent, log);
+                        Console.WriteLine(isLogValid == matchedPatterns.Count
+                            ? $"✅ Log: {log} has not been modified\n"
+                            : $"❌ Log {log} has been modified\n");
+
+                        // LSPDFR CHARACTERS CHECK
+                        ////////////////////////////////////////////////////////////////////////////////////////////////
+                        allCharacters.AddRange(GetCharacters(new List<string> { log }));
+
+                        // LOG PATH CHECK
+                        ////////////////////////////////////////////////////////////////////////////////////////////////
+                        var logPath = GetLogPath(fileContent, log);
+                        logPaths.Add(logPath);
+                    }
+                    else
+                    {
+                        Console.WriteLine($"❌ Failed to read file: {log}\nfileContent was null");
+                    }
+                }
+
+                // Check if characters have changed
+                HasCharacterChanged(allCharacters);
+
+                // Check if log paths have changed
+                HasLogPathChanged(logPaths);
+            }
+            else
+            {
+                Console.WriteLine("❌ GetLogs returned null");
             }
         }
     }
+}
