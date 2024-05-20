@@ -3,7 +3,7 @@ using System.Text.RegularExpressions;
 
 namespace HammerProxyCheck
 {
-    //TODO: More checks
+    //TODO: Decoration
     static class Program
     {
         #region Base
@@ -177,19 +177,20 @@ namespace HammerProxyCheck
         }
 
         #endregion
+
         #region Checks
 
         private static List<MatchedPattern> IsLogValid(string fileContent, string log)
         {
-            var matchedPattern = RegexMatch(log, fileContent, "Started new log on (\\d+\\W\\d+\\W\\d+)", 1); //TODO
-            var matchedPattern1 = RegexMatch(log, fileContent, "Log path: (.+)");
-            var matchedPattern2 = RegexMatch(log, fileContent, "Version: RAGE Plugin Hook v(.+) for Grand Theft Auto V", 1);
+            var matchedPattern = GetDate(fileContent, log, 2);
+            var matchedPattern1 = GetLogPath(fileContent, log);
+            var matchedPattern2 = GetRagePluginHookVersion(fileContent, log);
             var matchedPattern3 = RegexMatch(log, fileContent, "Cleaning temp folder");
             var matchedPattern4 = RegexMatch(log, fileContent, "Detected Windows (.+)!", 1);
             var matchedPattern5 = RegexMatch(log, fileContent, "Checking game support");
             var matchedPattern6 = RegexMatch(log, fileContent, "Product name: Grand Theft Auto V");
-            var matchedPattern7 = RegexMatch(log, fileContent, "Product version: (.+)", 1); 
-            var matchedPattern8 = RegexMatch(log, fileContent, "Is steam version: (.+)", 1); //TODO
+            var matchedPattern7 = GetProductVersion(fileContent, log);
+            var matchedPattern8 = GetIsSteamVersion(fileContent, log);
 
             List<MatchedPattern> listOfMatchedPatterns =
             [
@@ -363,6 +364,109 @@ namespace HammerProxyCheck
 
             return listOfMatchedPatterns;
         }
+
+        #region DateFormat
+        private static MatchedPattern GetDate(string fileContent, string log, int group)
+        {
+            return RegexMatch(log, fileContent, @"(Started new log on (\d+\W\d+\W\d+))", group);
+        }
+        static string GetDateFormat(string logLine, List<(string pattern, string format)> dateFormats)
+        {
+            string closestFormat = null;
+            // Iterate through each date format and try to find matches
+            foreach ((string pattern, string format) in dateFormats)
+            {
+                MatchCollection matches = Regex.Matches(logLine, pattern);
+                foreach (Match unused in matches)
+                {
+                    closestFormat = format;
+                }
+            }
+
+            return closestFormat;
+        }
+
+        private static void  DateFormatCheck(List<string> logs)
+        {
+            //Adding loglines to a list
+            List<(string, string)> logLines = [];
+            foreach (var log in logs)
+            {
+                var fileContent = ReadFile(log);
+                logLines.Add((GetDate(fileContent, log, 1).LogMatch.First(), log));
+            }
+
+            // Adding possible dateformats
+            List<(string pattern, string format)> dateFormats = new List<(string pattern, string format)>
+            {
+                // Standard date formats
+                (@"\d{4}-[0]?[1-9]-\d{1,2}", "yyyy-MM-dd"), // yyyy-MM-dd  2024-May-XX
+                (@"\d{4}-[1][0-2]-\d{1,2}", "yyyy-MM-dd"), // yyyy-MM-dd  2024-Oct-Dez-XX
+
+                (@"\d{4}/[0]?[1-9]/\d{1,2}", "yyyy/MM/dd"), // yyyy/MM/dd  2024/May/XX
+                (@"\d{4}/[1][0-2]/\d{1,2}", "yyyy/MM/dd"), // yyyy/MM/dd  2024/Oct-Dez/XX
+
+                (@"\d{4}\.[0]?[1-9]\.\d{1,2}", "yyyy.MM.dd"), // yyyy.MM.dd  2024.May.XX
+                (@"\d{4}\.[1][0-2]\.\d{1,2}", "yyyy.MM.dd"), // yyyy.MM.dd  2024.Oct-Dez.XX
+
+                (@"[0]?[1-9]-\d{1,2}-\d{4}", "MM-dd-yyyy"), // MM-dd-yyyy May-XX-2024
+                (@"[1][0-2]-\d{1,2}-\d{4}", "MM-dd-yyyy"), // MM-dd-yyyy Oct-Dez-XX-2024
+
+                (@"[0]?[1-9]/\d{1,2}/\d{4}", "MM/dd/yyyy"), // MM/dd/yyyy May/XX/2024
+                (@"[1][0-2]/\d{1,2}/\d{4}", "MM/dd/yyyy"), // MM/dd/yyyy Oct/Dez/XX/2024
+
+                (@"[0]?[1-9]\.\d{1,2}\.\d{4}", "MM.dd.yyyy"), // MM.dd.yyyy May.XX.2024
+                (@"[1][0-2]\.\d{1,2}\.\d{4}", "MM.dd.yyyy"), // MM.dd.yyyy Oct.Dez.XX.2024
+
+                (@"\d{1,2}\.[0]?[1-9]\.\d{4}", "dd.MM.yyyy"), // dd.MM.yyyy XX.May.2024
+                (@"\d{1,2}\.[1][0-2]\.\d{4}", "dd.MM.yyyy"), // dd.MM.yyyy XX.Oct-Dez.2024
+
+                // Add more standard date formats as needed
+
+                // Day and month with textual representation
+                (@"\d{1,2} (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) \d{4}",
+                    "d MMM yyyy"), // d MMM yyyy (e.g., 1 Jan 2023)
+                (@"\d{1,2} (January|February|March|April|May|June|July|August|September|October|November|December) \d{4}",
+                    "d MMMM yyyy"), // d MMMM yyyy (e.g., 1 January 2023)
+                // Add more day and month with textual representation formats as needed
+            };
+
+            // Add your additional date format with the same pattern
+            dateFormats.Add((@"\d{2}/\d{2}/\d{4}", "dd/MM/yyyy")); // dd/MM/yyyy
+            List<(string, string)> detectedDateFormats = [];
+            foreach (var line in logLines)
+            {
+                var closestFormat = GetDateFormat(line.Item1, dateFormats);
+                var dateMatch = Regex.Match(line.Item1, "Started new log on (.+)");
+                if (dateMatch.Success)
+                {
+                    var parsedDate = dateMatch.Groups[1].Value;
+                    if (closestFormat != null)
+                    {
+                        if(_detailMode) 
+                            Console.WriteLine($"Detected date format: {closestFormat}, Parsed date: {parsedDate}\nIn File: {line.Item2}");
+                        detectedDateFormats.Add((closestFormat, line.Item2));
+                    }
+                    else
+                    {
+                        Console.WriteLine("No date format detected for: " + line);
+                    }
+                }
+            }
+
+            bool dateFormatChange = false;
+            for (int i = 0; i < detectedDateFormats.Count - 1; i++)
+            {
+                if (detectedDateFormats[i].Item1 != detectedDateFormats[i + 1].Item1)
+                {
+                    dateFormatChange = true;
+                    Console.WriteLine($"❗  Dateformat change found!\nFormat: {detectedDateFormats[i].Item1} in file: {detectedDateFormats[i].Item2}\nFormat: {detectedDateFormats[i+1].Item1} in file: {detectedDateFormats[i+1].Item2}\n");
+                }
+            }
+            if(!dateFormatChange) Console.WriteLine(@"✅  No DateFormat changes found!");
+        }
+        
+        #endregion
 
         #region Character
 
@@ -697,90 +801,186 @@ namespace HammerProxyCheck
 
         #endregion
 
-        #endregion
+        #region Platform
 
-        private static void Main()
+        private static MatchedPattern GetIsSteamVersion(string fileContent, string log)
         {
-            ConsoleSettings();
-            DirectoryCheck();
-            var logs = GetLogs(Folder);
-            var allCharacters = new List<MatchedPattern>();
-            var logPaths = new List<MatchedPattern>();
-            var ragePluginHookVersions = new List<MatchedPattern>();
-            var productVersions = new List<MatchedPattern>();
+            return RegexMatch(log, fileContent, @"Is steam version: (True|False)", 1);
+        }
 
-            if (logs != null)
+        private enum Platform
+        {
+            Steam,
+            EpicGames,
+            Retail,
+            Unknown
+        }
+
+        private static Platform GetPlatform(string fileContent, string log)
+        {
+            MatchedPattern logpath = GetLogPath(fileContent, log);
+            MatchedPattern isSteamVersion = GetIsSteamVersion(fileContent, log);
+            foreach (var path in logpath.LogMatch)
             {
-                if (logs.Count == 0)
+                if (isSteamVersion.LogMatch.Contains("True") &&
+                    (path.Contains(@"\steamapps\common\Grand Theft Auto V\RagePluginHook.log") ||
+                     path.Contains(@"/steamapps/common/Grand Theft Auto V/RagePluginHook.log"))) return Platform.Steam;
+                if (path.Contains(@"Grand Theft Auto V\RagePluginHook.log") ||
+                    path.Contains("Grand Theft Auto V/RagePluginHook.log")) return Platform.Retail;
+                if (path.Contains(@"GTAV\RagePluginHook.log") ||
+                    path.Contains("GTAV/RagePluginHook.log")) return Platform.EpicGames;
+            }
+
+            return Platform.Unknown;
+        }
+
+        private static void HasPlatformChanged(List<Platform> platforms, List<string> logs)
+        {
+            var platformLogs = new Dictionary<Platform, List<string>>();
+
+            for (int i = 0; i < platforms.Count; i++)
+            {
+                var platform = platforms[i];
+                var log = logs[i];
+
+                if (platformLogs.TryGetValue(platform, out var logList))
                 {
-                    Console.WriteLine($"❌ There are no Logs in the Directory: {Folder}\nJumping to the end...");
-                    goto Restarting;
+                    logList.Add(log);
                 }
-
-                foreach (var log in logs)
+                else
                 {
-                    var fileContent = ReadFile(log);
-                    if (fileContent != null)
-                    {
-                        // IS LOG VALID CHECK
-                        ////////////////////////////////////////////////////////////////////////////////////////////////
-                        Console.WriteLine("Checking Log file:\t" + log);
-                        var matchedPatterns = IsLogValid(fileContent, log);
-                        int isLogValid = 0;
-                        foreach (var matchedPattern in matchedPatterns)
-                        {
-                            if (matchedPattern is { IsMatch: true, LogMatch.Count: 1 }) isLogValid++;
-                        }
-
-                        GetCharacters(fileContent, log);
-                        Console.WriteLine(isLogValid == matchedPatterns.Count
-                            ? $"✅ Log: {log} has not been modified\n"
-                            : $"❌ Log {log} has been modified\n");
-
-                        // LSPDFR CHARACTERS CHECK
-                        ////////////////////////////////////////////////////////////////////////////////////////////////
-                        allCharacters.AddRange(GetCharacters(new List<string> { log }));
-
-                        // LOG PATH CHECK
-                        ////////////////////////////////////////////////////////////////////////////////////////////////
-                        var logPath = GetLogPath(fileContent, log);
-                        logPaths.Add(logPath);
-
-                        // RAGE PLUGIN HOOK VERSION CHECK
-                        ////////////////////////////////////////////////////////////////////////////////////////////////
-                        var ragePluginHookVersion = GetRagePluginHookVersion(fileContent, log);
-                        ragePluginHookVersions.Add(ragePluginHookVersion);
-
-                        // PRODUCT VERSION CHECK
-                        ////////////////////////////////////////////////////////////////////////////////////////////////
-                        var productVersion = GetProductVersion(fileContent, log);
-                        productVersions.Add(productVersion);
-                    }
-                    else
-                    {
-                        Console.WriteLine($"❌ Failed to read file: {log}\nfileContent was null");
-                    }
+                    platformLogs[platform] = new List<string> { log };
                 }
+            }
 
-                // Check if characters have changed
-                HasCharacterChanged(allCharacters);
-
-                // Check if log paths have changed
-                HasLogPathChanged(logPaths);
-
-                // Check if RAGE Plugin Hook versions have changed
-                HasRagePluginHookVersionChanged(ragePluginHookVersions);
-
-                // Check if product versions have changed
-                HasProductVersionChanged(productVersions);
+            bool changesDetected = platformLogs.Count > 1;
+            if (!_detailMode)
+            {
+                Console.WriteLine(!changesDetected
+                    ? "\n✅ No platform changes detected across logs."
+                    : "\n❗ Platform changes were detected");
             }
             else
             {
-                Console.WriteLine("❌ GetLogs returned null");
-            }
+                foreach (var entry in platformLogs)
+                {
+                    var platform = entry.Key;
+                    var logsForPlatform = entry.Value;
 
-            Restarting:
-            Restart();
+                    Console.WriteLine($"\nPlatform: {platform}");
+                    foreach (var log in logsForPlatform)
+                    {
+                        Console.WriteLine($"- {log}");
+                    }
+                }
+
+                Console.WriteLine(!changesDetected
+                    ? "\n✅ No platform changes detected across logs."
+                    : "\n❗ Platform changes were detected in the logs listed above.");
+            }
         }
+
+        #endregion
+
+        #endregion
+
+private static void Main()
+{
+    ConsoleSettings();
+    DirectoryCheck();
+    var logs = GetLogs(Folder);
+    var allCharacters = new List<MatchedPattern>();
+    var logPaths = new List<MatchedPattern>();
+    var platforms = new List<Platform>();
+    var ragePluginHookVersions = new List<MatchedPattern>();
+    var productVersions = new List<MatchedPattern>();
+
+    if (logs != null)
+    {
+        if (logs.Count == 0)
+        {
+            Console.WriteLine($"❌ There are no Logs in the Directory: {Folder}\nJumping to the end...");
+            goto Restarting;
+        }
+
+        foreach (var log in logs)
+        {
+            var fileContent = ReadFile(log);
+            if (fileContent != null)
+            {
+                // IS LOG VALID CHECK
+                ////////////////////////////////////////////////////////////////////////////////////////////////
+                Console.WriteLine("Checking Log file:\t" + log);
+                var matchedPatterns = IsLogValid(fileContent, log);
+                int isLogValid = 0;
+                foreach (var matchedPattern in matchedPatterns)
+                {
+                    if (matchedPattern is { IsMatch: true, LogMatch.Count: 1 }) isLogValid++;
+                }
+
+                GetCharacters(fileContent, log);
+                Console.WriteLine(isLogValid == matchedPatterns.Count
+                    ? $"✅ Log: {log} has not been modified\n"
+                    : $"❌ Log {log} has been modified\n");
+
+                // LSPDFR CHARACTERS CHECK
+                ////////////////////////////////////////////////////////////////////////////////////////////////
+                allCharacters.AddRange(GetCharacters(new List<string> { log }));
+
+                // LOG PATH CHECK
+                ////////////////////////////////////////////////////////////////////////////////////////////////
+                var logPath = GetLogPath(fileContent, log);
+                logPaths.Add(logPath);
+
+                // RAGE PLUGIN HOOK VERSION CHECK
+                ////////////////////////////////////////////////////////////////////////////////////////////////
+                var ragePluginHookVersion = GetRagePluginHookVersion(fileContent, log);
+                ragePluginHookVersions.Add(ragePluginHookVersion);
+
+                // PRODUCT VERSION CHECK
+                ////////////////////////////////////////////////////////////////////////////////////////////////
+                var productVersion = GetProductVersion(fileContent, log);
+                productVersions.Add(productVersion);
+
+                // PLATFORM CHECK
+                ////////////////////////////////////////////////////////////////////////////////////////////////
+                var platform = GetPlatform(fileContent, log);
+                platforms.Add(platform);
+                
+            }
+            else
+            {
+                Console.WriteLine($"❌ Failed to read file: {log}\nfileContent was null");
+            }
+        }
+
+        // Check if characters have changed
+        HasCharacterChanged(allCharacters);
+
+        // Check if log paths have changed
+        HasLogPathChanged(logPaths);
+
+        // Check if RAGE Plugin Hook versions have changed
+        HasRagePluginHookVersionChanged(ragePluginHookVersions);
+
+        // Check if product versions have changed
+        HasProductVersionChanged(productVersions);
+
+        // Check if platforms have changed
+        HasPlatformChanged(platforms, logs);
+        
+        // DATEFORMAT CHECK
+        ////////////////////////////////////////////////////////////////////////////////////////////////
+        DateFormatCheck(logs);
+    }
+    else
+    {
+        Console.WriteLine("❌ GetLogs returned null");
+    }
+
+    Restarting:
+    Restart();
+}
+
     }
 }
