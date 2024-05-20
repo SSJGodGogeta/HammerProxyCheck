@@ -176,11 +176,32 @@ namespace HammerProxyCheck
             }
         }
 
+        private static void ProxProbability(int probability)
+        {
+            switch (probability)
+            {
+                case > 80:
+                    Console.WriteLine($@"💀  {probability}% chance of proxy support. Slam/Kill the user  💀");
+                    break;
+                case > 50 and < 80:
+                    Console.WriteLine($"🔍 {probability}% chance of proxy support. Enable detailed mode on the analysis and question the user. High chance!! 🔍");
+                    break;
+                case > 25 and < 50:
+                    Console.WriteLine($@"🕵️  {probability}% chance of proxy support. Have a detailed look on the analysis but go easy on the user  🕵️");
+                    break;
+                case > 15 and < 25:
+                    Console.WriteLine($"{probability}% chance of proxy support. Have a simple look. Could be a false positive but also due to piracy");
+                    break;
+                case < 15:
+                    Console.WriteLine($"{probability}% chance of proxy support. Could be a false positive. Can be triggered easily if character or/and gta or/and rph version changed");
+                    break;
+            }
+        }
         #endregion
 
         #region Checks
 
-        private static List<MatchedPattern> IsLogValid(string fileContent, string log)
+        private static bool IsLogValid(string fileContent, string log)
         {
             var matchedPattern = GetDate(fileContent, log, 2);
             var matchedPattern1 = GetLogPath(fileContent, log);
@@ -220,7 +241,7 @@ namespace HammerProxyCheck
                     Console.WriteLine(matchedPattern.IsMatch == false
                         ? "Reason: Line \"Started new log on ...\" has been removed!"
                         : "Reason: Line \"Started new log on ...\" appeared more than once!");
-                    return listOfMatchedPatterns;
+                    return false;
                 }
 
                 if (matchedPattern1 is { IsMatch: true, LogMatch.Count: 1 })
@@ -236,7 +257,7 @@ namespace HammerProxyCheck
                     Console.WriteLine(matchedPattern1.IsMatch == false
                         ? "Reason: Line \"Log path ...\" has been removed!"
                         : "Reason: Line \"Log path ...\" appeared more than once!");
-                    return listOfMatchedPatterns;
+                    return false;
                 }
 
                 if (matchedPattern2 is { IsMatch: true, LogMatch.Count: 1 })
@@ -253,7 +274,7 @@ namespace HammerProxyCheck
                     Console.WriteLine(matchedPattern2.IsMatch == false
                         ? "Reason: Line \"Version: RAGE Plugin Hook ...\" has been removed!"
                         : "Reason: Line \"Version: RAGE Plugin Hook ...\" appeared more than once!");
-                    return listOfMatchedPatterns;
+                    return false;
                 }
 
                 if (matchedPattern3 is { IsMatch: true, LogMatch.Count: 1 })
@@ -269,7 +290,7 @@ namespace HammerProxyCheck
                     Console.WriteLine(matchedPattern3.IsMatch == false
                         ? "Reason: Line \"Cleaning temp folder ...\" has been removed!"
                         : "Reason: Line \"Cleaning temp folder ...\" appeared more than once!");
-                    return listOfMatchedPatterns;
+                    return false;
                 }
 
                 if (matchedPattern4 is { IsMatch: true, LogMatch.Count: 1 })
@@ -286,7 +307,7 @@ namespace HammerProxyCheck
                     Console.WriteLine(matchedPattern4.IsMatch == false
                         ? "Reason: Line \"Detected Windows ...\" has been removed!"
                         : "Reason: Line \"Detected Windows ...\" appeared more than once!");
-                    return listOfMatchedPatterns;
+                    return false;
                 }
 
                 if (matchedPattern5 is { IsMatch: true, LogMatch.Count: 1 })
@@ -302,7 +323,7 @@ namespace HammerProxyCheck
                     Console.WriteLine(matchedPattern5.IsMatch == false
                         ? "Reason: Line \"Checking game support ...\" has been removed!"
                         : "Reason: Line \"Checking game support ...\" appeared more than once!");
-                    return listOfMatchedPatterns;
+                    return false;
                 }
 
                 if (matchedPattern6 is { IsMatch: true, LogMatch.Count: 1 })
@@ -319,7 +340,7 @@ namespace HammerProxyCheck
                     Console.WriteLine(matchedPattern6.IsMatch == false
                         ? "Reason: Line \"Product name: Grand Theft Auto V ...\" has been removed!"
                         : "Reason: Line \"Product name: Grand Theft Auto V ...\" appeared more than once!");
-                    return listOfMatchedPatterns;
+                    return false;
                 }
 
                 if (matchedPattern7 is { IsMatch: true, LogMatch.Count: 1 })
@@ -335,7 +356,7 @@ namespace HammerProxyCheck
                     Console.WriteLine(matchedPattern7.IsMatch == false
                         ? "Reason: Line \"Product version: ...\" has been removed!"
                         : "Reason: Line \"Product version: ...\" appeared more than once!");
-                    return listOfMatchedPatterns;
+                    return false;
                 }
 
                 if (matchedPattern8 is { IsMatch: true, LogMatch.Count: 1 })
@@ -358,11 +379,18 @@ namespace HammerProxyCheck
                 foreach (var matchedPatterns in listOfMatchedPatterns)
                 {
                     if (!matchedPatterns.IsMatch || matchedPatterns.LogMatch.Count > 1)
-                        return listOfMatchedPatterns;
+                        return false;
                 }
             }
 
-            return listOfMatchedPatterns;
+            int isLogValid = 0;
+            foreach (var matchedPatterns in listOfMatchedPatterns)
+            {
+                if (matchedPattern is { IsMatch: true, LogMatch.Count: 1 }) isLogValid++;
+            }
+
+            GetCharacters(fileContent, log);
+            return (isLogValid == listOfMatchedPatterns.Count);
         }
 
         #region DateFormat
@@ -388,7 +416,7 @@ namespace HammerProxyCheck
             return closestFormat;
         }
 
-        private static void DateFormatCheck(List<string> logs)
+        private static bool DateFormatCheck(List<string> logs)
         {
             //Adding loglines to a list
             List<(string, string)> logLines = [];
@@ -459,6 +487,8 @@ namespace HammerProxyCheck
                 }
             }
 
+            Console.WriteLine();
+
             bool dateFormatChange = false;
             for (int i = 0; i < detectedDateFormats.Count - 1; i++)
             {
@@ -475,6 +505,7 @@ namespace HammerProxyCheck
             }
 
             if (!dateFormatChange) Console.WriteLine(@"✅  No DateFormat changes found!");
+            return dateFormatChange;
         }
 
         #endregion
@@ -521,7 +552,7 @@ namespace HammerProxyCheck
             return matchedPatterns;
         }
 
-        private static void HasCharacterChanged(List<MatchedPattern> matchedPatterns)
+        private static bool HasCharacterChanged(List<MatchedPattern> matchedPatterns)
         {
             var characterLogs = new Dictionary<HashSet<string>, List<string>>(HashSet<string>.CreateSetComparer());
             foreach (var pattern in matchedPatterns)
@@ -588,13 +619,15 @@ namespace HammerProxyCheck
                     ? "\n✅ No character changes detected across logs."
                     : "\n❗ Character changes were detected");
             }
+
+            return changesDetected;
         }
 
         #endregion
 
         #region LogPath
 
-        private static void HasLogPathChanged(List<MatchedPattern> logPaths)
+        private static bool HasLogPathChanged(List<MatchedPattern> logPaths)
         {
             var logPathLogs = new Dictionary<string, List<string>>();
             foreach (var pattern in logPaths)
@@ -660,6 +693,8 @@ namespace HammerProxyCheck
                     ? "\n✅ No log path changes detected across logs."
                     : "\n❗ Log path changes were detected in the logs listed above.");
             }
+
+            return changesDetected;
         }
 
         private static MatchedPattern GetLogPath(string fileContent, string log)
@@ -682,7 +717,7 @@ namespace HammerProxyCheck
             return RegexMatch(log, fileContent, @"Product version: (.+)", 1);
         }
 
-        private static void HasRagePluginHookVersionChanged(List<MatchedPattern> versions)
+        private static bool HasRagePluginHookVersionChanged(List<MatchedPattern> versions)
         {
             var versionLogs = new Dictionary<string, List<string>>();
             foreach (var pattern in versions)
@@ -746,9 +781,11 @@ namespace HammerProxyCheck
                     ? "\n✅ No RAGE Plugin Hook version changes detected across logs."
                     : "\n❗ RAGE Plugin Hook version changes were detected in the logs listed above.");
             }
+
+            return changesDetected;
         }
 
-        private static void HasProductVersionChanged(List<MatchedPattern> versions)
+        private static bool HasProductVersionChanged(List<MatchedPattern> versions)
         {
             var versionLogs = new Dictionary<string, List<string>>();
             foreach (var pattern in versions)
@@ -812,6 +849,8 @@ namespace HammerProxyCheck
                     ? "\n✅ No product version changes detected across logs."
                     : "\n❗ Product version changes were detected in the logs listed above.");
             }
+
+            return changesDetected;
         }
 
         #endregion
@@ -840,8 +879,8 @@ namespace HammerProxyCheck
                 if (isSteamVersion.LogMatch.Contains("True") &&
                     (path.Contains(@"\steamapps\common\Grand Theft Auto V\RagePluginHook.log") ||
                      path.Contains(@"/steamapps/common/Grand Theft Auto V/RagePluginHook.log"))) return Platform.Steam;
-                if (path.Contains(@"Grand Theft Auto V\RagePluginHook.log") ||
-                    path.Contains("Grand Theft Auto V/RagePluginHook.log")) return Platform.Retail;
+                if (isSteamVersion.LogMatch.Contains("True") && (path.Contains(@"Grand Theft Auto V\RagePluginHook.log") ||
+                    path.Contains("Grand Theft Auto V/RagePluginHook.log"))) return Platform.Retail;
                 if (path.Contains(@"GTAV\RagePluginHook.log") ||
                     path.Contains("GTAV/RagePluginHook.log")) return Platform.EpicGames;
             }
@@ -849,7 +888,7 @@ namespace HammerProxyCheck
             return Platform.Unknown;
         }
 
-        private static void HasPlatformChanged(List<Platform> platforms, List<string> logs)
+        private static bool HasPlatformChanged(List<Platform> platforms, List<string> logs)
         {
             var platformLogs = new Dictionary<Platform, List<string>>();
 
@@ -894,6 +933,41 @@ namespace HammerProxyCheck
                     ? "\n✅ No platform changes detected across logs.\n"
                     : "\n❗ Platform changes were detected in the logs listed above.\n");
             }
+
+            return changesDetected;
+        }
+
+        private static bool IsPossiblyPirated(List<string> logs)
+        {
+            Console.WriteLine();
+            var isPirated = false;
+            var isPiratedReturn = false;
+            foreach (var log in logs)
+            {
+                var filename = Regex.Match(log, $@"\\LogsForProxyCheck\\(.+)").Groups[1].Value;
+                var fileContent = ReadFile(log);
+                if (GetPlatform(fileContent, log) == Platform.Unknown)
+                {
+                    isPirated = true;
+                    isPiratedReturn = true;
+                }
+                if (_detailMode)
+                {
+                    Console.WriteLine(isPirated
+                        ? $@"⚠️ ❗  Possible piracy case detected in log:	{filename}  ❗ ⚠️"
+                        : $"✅  No piracy case detected in log:\t{filename}");
+                }
+
+                isPirated = false;
+            }
+            if (!_detailMode)
+            {
+                Console.WriteLine(isPiratedReturn
+                    ? $@"⚠️ ❗  Possible piracy case detected!  ❗ ⚠️"
+                    : $"✅  No piracy case detected!");
+            }
+            Console.WriteLine();
+            return isPiratedReturn;
         }
 
         #endregion
@@ -910,7 +984,7 @@ namespace HammerProxyCheck
             var platforms = new List<Platform>();
             var ragePluginHookVersions = new List<MatchedPattern>();
             var productVersions = new List<MatchedPattern>();
-
+            int proxyProbability = 0;
             if (logs != null)
             {
                 if (logs.Count == 0)
@@ -924,19 +998,12 @@ namespace HammerProxyCheck
                     var fileContent = ReadFile(log);
                     if (fileContent != null)
                     {
-                        // IS LOG VALID CHECK
-                        ////////////////////////////////////////////////////////////////////////////////////////////////
                         var filename = Regex.Match(log, $@"\\LogsForProxyCheck\\(.+)").Groups[1].Value;
                         Console.WriteLine("⚠️  Checking Log file:\t" + filename);
-                        var matchedPatterns = IsLogValid(fileContent, log);
-                        int isLogValid = 0;
-                        foreach (var matchedPattern in matchedPatterns)
-                        {
-                            if (matchedPattern is { IsMatch: true, LogMatch.Count: 1 }) isLogValid++;
-                        }
-
-                        GetCharacters(fileContent, log);
-                        Console.WriteLine(isLogValid == matchedPatterns.Count
+                        // IS LOG VALID CHECK
+                        ////////////////////////////////////////////////////////////////////////////////////////////////
+                        var isLogValid = IsLogValid(fileContent, log);
+                        Console.WriteLine(isLogValid
                             ? $"✅  Log: {filename} has not been modified\n"
                             : $"❌  Log {filename} has been modified\n");
 
@@ -971,23 +1038,24 @@ namespace HammerProxyCheck
                 }
 
                 // Check if characters have changed
-                HasCharacterChanged(allCharacters);
-
+                if (HasCharacterChanged(allCharacters)) proxyProbability += 5;
+                
                 // Check if log paths have changed
-                HasLogPathChanged(logPaths);
+                if (HasLogPathChanged(logPaths)) proxyProbability += 25;
 
                 // Check if RAGE Plugin Hook versions have changed
-                HasRagePluginHookVersionChanged(ragePluginHookVersions);
+                if (HasRagePluginHookVersionChanged(ragePluginHookVersions)) proxyProbability += 5;
 
                 // Check if product versions have changed
-                HasProductVersionChanged(productVersions);
+                if (HasProductVersionChanged(productVersions)) proxyProbability += 5;
 
                 // Check if platforms have changed
-                HasPlatformChanged(platforms, logs);
-
+                if (HasPlatformChanged(platforms, logs)) proxyProbability += 20;
+                if (IsPossiblyPirated(logs)) proxyProbability += 15;
                 // DATEFORMAT CHECK
                 ////////////////////////////////////////////////////////////////////////////////////////////////
-                DateFormatCheck(logs);
+                if (DateFormatCheck(logs)) proxyProbability += 25;
+                ProxProbability(proxyProbability);
             }
             else
             {
