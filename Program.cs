@@ -177,20 +177,18 @@ namespace HammerProxyCheck
         }
 
         #endregion
-
         #region Checks
 
         private static List<MatchedPattern> IsLogValid(string fileContent, string log)
         {
             var matchedPattern = RegexMatch(log, fileContent, "Started new log on (\\d+\\W\\d+\\W\\d+)", 1); //TODO
             var matchedPattern1 = RegexMatch(log, fileContent, "Log path: (.+)");
-            var matchedPattern2 = RegexMatch(log, fileContent, "Version: RAGE Plugin Hook v(.+) for Grand Theft Auto V", //TODO
-                1);
+            var matchedPattern2 = RegexMatch(log, fileContent, "Version: RAGE Plugin Hook v(.+) for Grand Theft Auto V", 1);
             var matchedPattern3 = RegexMatch(log, fileContent, "Cleaning temp folder");
-            var matchedPattern4 = RegexMatch(log, fileContent, "Detected Windows (.+)!", 1); //TODO
+            var matchedPattern4 = RegexMatch(log, fileContent, "Detected Windows (.+)!", 1);
             var matchedPattern5 = RegexMatch(log, fileContent, "Checking game support");
-            var matchedPattern6 = RegexMatch(log, fileContent, "Product name: Grand Theft Auto V"); //TODO
-            var matchedPattern7 = RegexMatch(log, fileContent, "Product version: (.+)", 1); //TODO
+            var matchedPattern6 = RegexMatch(log, fileContent, "Product name: Grand Theft Auto V");
+            var matchedPattern7 = RegexMatch(log, fileContent, "Product version: (.+)", 1); 
             var matchedPattern8 = RegexMatch(log, fileContent, "Is steam version: (.+)", 1); //TODO
 
             List<MatchedPattern> listOfMatchedPatterns =
@@ -532,7 +530,7 @@ namespace HammerProxyCheck
                     }
 
                     changesDetected = true;
-                    Console.WriteLine($"❗ Found different Log path:\n- {logPath}");
+                    Console.WriteLine($"\n❗ Found different Log path:\n- {logPath}");
 
                     Console.WriteLine("In File:");
                     foreach (var log in logs)
@@ -555,6 +553,150 @@ namespace HammerProxyCheck
 
         #endregion
 
+        #region GTA and RPH Version
+
+        private static MatchedPattern GetRagePluginHookVersion(string fileContent, string log)
+        {
+            return RegexMatch(log, fileContent, @"Version: RAGE Plugin Hook v(.+) for Grand Theft Auto V", 1);
+        }
+
+        private static MatchedPattern GetProductVersion(string fileContent, string log)
+        {
+            return RegexMatch(log, fileContent, @"Product version: (.+)", 1);
+        }
+
+        private static void HasRagePluginHookVersionChanged(List<MatchedPattern> versions)
+        {
+            var versionLogs = new Dictionary<string, List<string>>();
+            foreach (var pattern in versions)
+            {
+                if (pattern.IsMatch)
+                {
+                    var version = pattern.LogMatch.First();
+                    if (versionLogs.TryGetValue(version, out var logs))
+                    {
+                        logs.Add(pattern.Log);
+                    }
+                    else
+                    {
+                        versionLogs[version] = new List<string> { pattern.Log };
+                    }
+                }
+            }
+
+            bool changesDetected = false;
+            if (!_detailMode)
+            {
+                foreach (var entry in versionLogs)
+                {
+                    var logs = entry.Value;
+                    if (logs.Count > 1)
+                    {
+                        continue;
+                    }
+
+                    changesDetected = true;
+                }
+
+                Console.WriteLine(!changesDetected
+                    ? "\n✅ No RAGE Plugin Hook version changes detected across logs."
+                    : "\n❗ RAGE Plugin Hook version changes were detected");
+            }
+            else
+            {
+                foreach (var entry in versionLogs)
+                {
+                    var version = entry.Key;
+                    var logs = entry.Value;
+
+                    if (logs.Count > 1)
+                    {
+                        continue;
+                    }
+
+                    changesDetected = true;
+                    Console.WriteLine($"\n❗ Found different RAGE Plugin Hook version:\n- {version}");
+
+                    Console.WriteLine("In File:");
+                    foreach (var log in logs)
+                    {
+                        Console.WriteLine($"- {log}");
+                    }
+                }
+
+                Console.WriteLine(!changesDetected
+                    ? "\n✅ No RAGE Plugin Hook version changes detected across logs."
+                    : "\n❗ RAGE Plugin Hook version changes were detected in the logs listed above.");
+            }
+        }
+
+        private static void HasProductVersionChanged(List<MatchedPattern> versions)
+        {
+            var versionLogs = new Dictionary<string, List<string>>();
+            foreach (var pattern in versions)
+            {
+                if (pattern.IsMatch)
+                {
+                    var version = pattern.LogMatch.First();
+                    if (versionLogs.TryGetValue(version, out var logs))
+                    {
+                        logs.Add(pattern.Log);
+                    }
+                    else
+                    {
+                        versionLogs[version] = new List<string> { pattern.Log };
+                    }
+                }
+            }
+
+            bool changesDetected = false;
+            if (!_detailMode)
+            {
+                foreach (var entry in versionLogs)
+                {
+                    var logs = entry.Value;
+                    if (logs.Count > 1)
+                    {
+                        continue;
+                    }
+
+                    changesDetected = true;
+                }
+
+                Console.WriteLine(!changesDetected
+                    ? "\n✅ No product version changes detected across logs."
+                    : "\n❗ Product version changes were detected");
+            }
+            else
+            {
+                foreach (var entry in versionLogs)
+                {
+                    var version = entry.Key;
+                    var logs = entry.Value;
+
+                    if (logs.Count > 1)
+                    {
+                        continue;
+                    }
+
+                    changesDetected = true;
+                    Console.WriteLine($"\n❗ Found different product version:\n- {version}");
+
+                    Console.WriteLine("In File:");
+                    foreach (var log in logs)
+                    {
+                        Console.WriteLine($"- {log}");
+                    }
+                }
+
+                Console.WriteLine(!changesDetected
+                    ? "\n✅ No product version changes detected across logs."
+                    : "\n❗ Product version changes were detected in the logs listed above.");
+            }
+        }
+
+        #endregion
+
         #endregion
 
         private static void Main()
@@ -564,6 +706,8 @@ namespace HammerProxyCheck
             var logs = GetLogs(Folder);
             var allCharacters = new List<MatchedPattern>();
             var logPaths = new List<MatchedPattern>();
+            var ragePluginHookVersions = new List<MatchedPattern>();
+            var productVersions = new List<MatchedPattern>();
 
             if (logs != null)
             {
@@ -601,6 +745,16 @@ namespace HammerProxyCheck
                         ////////////////////////////////////////////////////////////////////////////////////////////////
                         var logPath = GetLogPath(fileContent, log);
                         logPaths.Add(logPath);
+
+                        // RAGE PLUGIN HOOK VERSION CHECK
+                        ////////////////////////////////////////////////////////////////////////////////////////////////
+                        var ragePluginHookVersion = GetRagePluginHookVersion(fileContent, log);
+                        ragePluginHookVersions.Add(ragePluginHookVersion);
+
+                        // PRODUCT VERSION CHECK
+                        ////////////////////////////////////////////////////////////////////////////////////////////////
+                        var productVersion = GetProductVersion(fileContent, log);
+                        productVersions.Add(productVersion);
                     }
                     else
                     {
@@ -613,11 +767,18 @@ namespace HammerProxyCheck
 
                 // Check if log paths have changed
                 HasLogPathChanged(logPaths);
+
+                // Check if RAGE Plugin Hook versions have changed
+                HasRagePluginHookVersionChanged(ragePluginHookVersions);
+
+                // Check if product versions have changed
+                HasProductVersionChanged(productVersions);
             }
             else
             {
                 Console.WriteLine("❌ GetLogs returned null");
             }
+
             Restarting:
             Restart();
         }
