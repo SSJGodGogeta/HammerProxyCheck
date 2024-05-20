@@ -3,7 +3,6 @@ using System.Text.RegularExpressions;
 
 namespace HammerProxyCheck
 {
-    //TODO: Decoration
     static class Program
     {
         #region Base
@@ -17,7 +16,7 @@ namespace HammerProxyCheck
             if (Directory.Exists(Folder) && Directory.GetFiles(Folder).Length > 0)
             {
                 Console.WriteLine(
-                    $"Going to PERMANENTLY delete old RagePluginHook.logs from: {Folder}\nPlease reply with Y if you want me to do that. Otherwise reply with N");
+                    $"\nGoing to PERMANENTLY delete old RagePluginHook.logs from: {Folder}\nPlease reply with Y if you want me to do that. Otherwise reply with N");
                 switch (Console.ReadKey().Key)
                 {
                     case ConsoleKey.Y:
@@ -79,7 +78,8 @@ namespace HammerProxyCheck
                         if (!files.Contains(file))
                         {
                             files.Add(file);
-                            Console.WriteLine($"✅ Added File: {file} to list");
+                            var filename = Regex.Match(file, $@"\\LogsForProxyCheck\\(.+)").Groups[1].Value;
+                            Console.WriteLine($"✅ Added File: {filename} to list");
                         }
                     }
                     else
@@ -141,6 +141,8 @@ namespace HammerProxyCheck
 
         private static void ConsoleSettings()
         {
+            Console.OutputEncoding = Encoding.UTF8;
+            Console.Title = "[ULSS]Proxy Checker";
             Console.WriteLine("\nDetail Mode? Answer with Y/N");
             switch (Console.ReadKey().Key)
             {
@@ -155,8 +157,6 @@ namespace HammerProxyCheck
                     Main();
                     break;
             }
-
-            Console.OutputEncoding = Encoding.UTF8;
         }
 
         private static void Restart()
@@ -211,7 +211,7 @@ namespace HammerProxyCheck
                 {
                     foreach (var s in matchedPattern.LogMatch)
                     {
-                        Console.WriteLine($"✅ Timestamp exists?:	{matchedPattern.IsMatch}\nMatched Timestamp:\t{s}");
+                        Console.WriteLine($"Timestamp exists?:	\t{matchedPattern.IsMatch}\t\tValue:\t{s}");
                     }
                 }
                 else
@@ -227,7 +227,7 @@ namespace HammerProxyCheck
                 {
                     foreach (var s in matchedPattern1.LogMatch)
                     {
-                        Console.WriteLine($"✅ Log path exists?:	{matchedPattern1.IsMatch}\nMatched Log path:\t{s}");
+                        Console.WriteLine($"Log path exists?:	\t{matchedPattern1.IsMatch}\t\tPath:\t{s}");
                     }
                 }
                 else
@@ -244,7 +244,7 @@ namespace HammerProxyCheck
                     foreach (var s in matchedPattern2.LogMatch)
                     {
                         Console.WriteLine(
-                            $"✅ RPH Version exists?:	{matchedPattern2.IsMatch}\nMatched RPH Version:\t{s}");
+                            $"RPH Version exists?:	\t{matchedPattern2.IsMatch}\t\tValue:\t{s}");
                     }
                 }
                 else
@@ -260,7 +260,7 @@ namespace HammerProxyCheck
                 {
                     foreach (var s in matchedPattern3.LogMatch)
                     {
-                        Console.WriteLine($"✅ Cleaning temp folder exists?:	{matchedPattern3.IsMatch}\nMatched:\t{s}");
+                        Console.WriteLine($"Cleaning temp folder exists?:	{matchedPattern3.IsMatch}");
                     }
                 }
                 else
@@ -277,7 +277,7 @@ namespace HammerProxyCheck
                     foreach (var s in matchedPattern4.LogMatch)
                     {
                         Console.WriteLine(
-                            $"✅ Detected Windows exists?:	{matchedPattern4.IsMatch}\nMatched Detected Windows:\t{s}");
+                            $"Detected Windows exists?:	{matchedPattern4.IsMatch}\t\tValue:\t{s}");
                     }
                 }
                 else
@@ -293,7 +293,7 @@ namespace HammerProxyCheck
                 {
                     foreach (var s in matchedPattern5.LogMatch)
                     {
-                        Console.WriteLine($"✅ Checking game support exists?:	{matchedPattern5.IsMatch}\nMatched:\t{s}");
+                        Console.WriteLine($"Checking game support exists?:	{matchedPattern5.IsMatch}");
                     }
                 }
                 else
@@ -310,7 +310,7 @@ namespace HammerProxyCheck
                     foreach (var s in matchedPattern6.LogMatch)
                     {
                         Console.WriteLine(
-                            $"✅ Product name: Grand Theft Auto V exists?:	{matchedPattern6.IsMatch}\nMatched:\t{s}");
+                            $"Product name: exists?:	\t{matchedPattern6.IsMatch}");
                     }
                 }
                 else
@@ -326,7 +326,7 @@ namespace HammerProxyCheck
                 {
                     foreach (var s in matchedPattern7.LogMatch)
                     {
-                        Console.WriteLine($"✅ Product version: exists?:	{matchedPattern7.IsMatch}\nMatched:\t{s}");
+                        Console.WriteLine($"Product version: exists?:	{matchedPattern7.IsMatch}\t\tValue:\t{s}");
                     }
                 }
                 else
@@ -342,7 +342,7 @@ namespace HammerProxyCheck
                 {
                     foreach (var s in matchedPattern8.LogMatch)
                     {
-                        Console.WriteLine($"✅ Is steam version exists?:	{matchedPattern8.IsMatch}\nMatched:\t{s}");
+                        Console.WriteLine($"Is steam version exists?:	{matchedPattern8.IsMatch}");
                     }
                 }
                 else
@@ -366,10 +366,12 @@ namespace HammerProxyCheck
         }
 
         #region DateFormat
+
         private static MatchedPattern GetDate(string fileContent, string log, int group)
         {
             return RegexMatch(log, fileContent, @"(Started new log on (\d+\W\d+\W\d+))", group);
         }
+
         static string? GetDateFormat(string logLine, List<(string pattern, string? format)> dateFormats)
         {
             string? closestFormat = null;
@@ -386,7 +388,7 @@ namespace HammerProxyCheck
             return closestFormat;
         }
 
-        private static void  DateFormatCheck(List<string> logs)
+        private static void DateFormatCheck(List<string> logs)
         {
             //Adding loglines to a list
             List<(string, string)> logLines = [];
@@ -431,7 +433,6 @@ namespace HammerProxyCheck
                 // Add more day and month with textual representation formats as needed
 
                 (@"\d{2}/\d{2}/\d{4}", "dd/MM/yyyy") // dd/MM/yyyy
-
             ];
 
             // Add your additional date format with the same pattern
@@ -445,8 +446,10 @@ namespace HammerProxyCheck
                     var parsedDate = dateMatch.Groups[1].Value;
                     if (closestFormat != null)
                     {
-                        if(_detailMode) 
-                            Console.WriteLine($"Detected date format: {closestFormat}, Parsed date: {parsedDate}\nIn File: {line.Item2}");
+                        var filename = Regex.Match(line.Item2, $@"\\LogsForProxyCheck\\(.+)").Groups[1].Value;
+                        if (_detailMode)
+                            Console.WriteLine(
+                                $"Detected date format: {closestFormat},\tParsed date: {parsedDate},\tIn File: {filename}");
                         detectedDateFormats.Add((closestFormat, line.Item2));
                     }
                     else
@@ -462,12 +465,18 @@ namespace HammerProxyCheck
                 if (detectedDateFormats[i].Item1 != detectedDateFormats[i + 1].Item1)
                 {
                     dateFormatChange = true;
-                    Console.WriteLine($"❗  Dateformat change found!\nFormat: {detectedDateFormats[i].Item1} in file: {detectedDateFormats[i].Item2}\nFormat: {detectedDateFormats[i+1].Item1} in file: {detectedDateFormats[i+1].Item2}\n");
+                    var filename = Regex.Match(detectedDateFormats[i].Item2, $@"\\LogsForProxyCheck\\(.+)").Groups[1]
+                        .Value;
+                    var filenameNext = Regex.Match(detectedDateFormats[i + 1].Item2, $@"\\LogsForProxyCheck\\(.+)")
+                        .Groups[1].Value;
+                    Console.WriteLine(
+                        $"❗  Dateformat change found!\nFormat: {detectedDateFormats[i].Item1} in file: {filename}\nFormat: {detectedDateFormats[i + 1].Item1} in file: {filenameNext}\n");
                 }
             }
-            if(!dateFormatChange) Console.WriteLine(@"✅  No DateFormat changes found!");
+
+            if (!dateFormatChange) Console.WriteLine(@"✅  No DateFormat changes found!");
         }
-        
+
         #endregion
 
         #region Character
@@ -478,8 +487,8 @@ namespace HammerProxyCheck
             if (_detailMode)
             {
                 Console.WriteLine(matchedPattern.LogMatch.Count > 0
-                    ? $"✅ Found the following characters in log:"
-                    : $"❌ No Characters found in log:");
+                    ? $"✅  Found the following characters in log:"
+                    : $"❌  No Characters found in log");
                 foreach (var character in matchedPattern.LogMatch)
                 {
                     if (character.Equals("Ben J.") || character.Equals("Michelle Meto")) continue;
@@ -570,7 +579,8 @@ namespace HammerProxyCheck
                     Console.WriteLine("In File:");
                     foreach (var log in logs)
                     {
-                        Console.WriteLine($"- {log}");
+                        var filename = Regex.Match(log, $@"\\LogsForProxyCheck\\(.+)").Groups[1].Value;
+                        Console.WriteLine($"- {filename}");
                     }
                 }
 
@@ -641,7 +651,8 @@ namespace HammerProxyCheck
                     Console.WriteLine("In File:");
                     foreach (var log in logs)
                     {
-                        Console.WriteLine($"- {log}");
+                        var filename = Regex.Match(log, $@"\\LogsForProxyCheck\\(.+)").Groups[1].Value;
+                        Console.WriteLine($"- {filename}");
                     }
                 }
 
@@ -726,7 +737,8 @@ namespace HammerProxyCheck
                     Console.WriteLine("In File:");
                     foreach (var log in logs)
                     {
-                        Console.WriteLine($"- {log}");
+                        var filename = Regex.Match(log, $@"\\LogsForProxyCheck\\(.+)").Groups[1].Value;
+                        Console.WriteLine($"- {filename}");
                     }
                 }
 
@@ -791,7 +803,8 @@ namespace HammerProxyCheck
                     Console.WriteLine("In File:");
                     foreach (var log in logs)
                     {
-                        Console.WriteLine($"- {log}");
+                        var filename = Regex.Match(log, $@"\\LogsForProxyCheck\\(.+)").Groups[1].Value;
+                        Console.WriteLine($"- {filename}");
                     }
                 }
 
@@ -872,13 +885,14 @@ namespace HammerProxyCheck
                     Console.WriteLine($"\nPlatform: {platform}");
                     foreach (var log in logsForPlatform)
                     {
-                        Console.WriteLine($"- {log}");
+                        var filename = Regex.Match(log, $@"\\LogsForProxyCheck\\(.+)").Groups[1].Value;
+                        Console.WriteLine($"- {filename}");
                     }
                 }
 
                 Console.WriteLine(!changesDetected
-                    ? "\n✅ No platform changes detected across logs."
-                    : "\n❗ Platform changes were detected in the logs listed above.");
+                    ? "\n✅ No platform changes detected across logs.\n"
+                    : "\n❗ Platform changes were detected in the logs listed above.\n");
             }
         }
 
@@ -886,103 +900,102 @@ namespace HammerProxyCheck
 
         #endregion
 
-private static void Main()
-{
-    ConsoleSettings();
-    DirectoryCheck();
-    var logs = GetLogs(Folder);
-    var allCharacters = new List<MatchedPattern>();
-    var logPaths = new List<MatchedPattern>();
-    var platforms = new List<Platform>();
-    var ragePluginHookVersions = new List<MatchedPattern>();
-    var productVersions = new List<MatchedPattern>();
-
-    if (logs != null)
-    {
-        if (logs.Count == 0)
+        private static void Main()
         {
-            Console.WriteLine($"❌ There are no Logs in the Directory: {Folder}\nJumping to the end...");
-            goto Restarting;
-        }
+            ConsoleSettings();
+            DirectoryCheck();
+            var logs = GetLogs(Folder);
+            var allCharacters = new List<MatchedPattern>();
+            var logPaths = new List<MatchedPattern>();
+            var platforms = new List<Platform>();
+            var ragePluginHookVersions = new List<MatchedPattern>();
+            var productVersions = new List<MatchedPattern>();
 
-        foreach (var log in logs)
-        {
-            var fileContent = ReadFile(log);
-            if (fileContent != null)
+            if (logs != null)
             {
-                // IS LOG VALID CHECK
-                ////////////////////////////////////////////////////////////////////////////////////////////////
-                Console.WriteLine("Checking Log file:\t" + log);
-                var matchedPatterns = IsLogValid(fileContent, log);
-                int isLogValid = 0;
-                foreach (var matchedPattern in matchedPatterns)
+                if (logs.Count == 0)
                 {
-                    if (matchedPattern is { IsMatch: true, LogMatch.Count: 1 }) isLogValid++;
+                    Console.WriteLine($"❌ There are no Logs in the Directory: {Folder}\nJumping to the end...");
+                    goto Restarting;
                 }
 
-                GetCharacters(fileContent, log);
-                Console.WriteLine(isLogValid == matchedPatterns.Count
-                    ? $"✅ Log: {log} has not been modified\n"
-                    : $"❌ Log {log} has been modified\n");
+                foreach (var log in logs)
+                {
+                    var fileContent = ReadFile(log);
+                    if (fileContent != null)
+                    {
+                        // IS LOG VALID CHECK
+                        ////////////////////////////////////////////////////////////////////////////////////////////////
+                        var filename = Regex.Match(log, $@"\\LogsForProxyCheck\\(.+)").Groups[1].Value;
+                        Console.WriteLine("⚠️  Checking Log file:\t" + filename);
+                        var matchedPatterns = IsLogValid(fileContent, log);
+                        int isLogValid = 0;
+                        foreach (var matchedPattern in matchedPatterns)
+                        {
+                            if (matchedPattern is { IsMatch: true, LogMatch.Count: 1 }) isLogValid++;
+                        }
 
-                // LSPDFR CHARACTERS CHECK
-                ////////////////////////////////////////////////////////////////////////////////////////////////
-                allCharacters.AddRange(GetCharacters([log]));
+                        GetCharacters(fileContent, log);
+                        Console.WriteLine(isLogValid == matchedPatterns.Count
+                            ? $"✅  Log: {filename} has not been modified\n"
+                            : $"❌  Log {filename} has been modified\n");
 
-                // LOG PATH CHECK
-                ////////////////////////////////////////////////////////////////////////////////////////////////
-                var logPath = GetLogPath(fileContent, log);
-                logPaths.Add(logPath);
+                        // LSPDFR CHARACTERS CHECK
+                        ////////////////////////////////////////////////////////////////////////////////////////////////
+                        allCharacters.AddRange(GetCharacters([log]));
 
-                // RAGE PLUGIN HOOK VERSION CHECK
-                ////////////////////////////////////////////////////////////////////////////////////////////////
-                var ragePluginHookVersion = GetRagePluginHookVersion(fileContent, log);
-                ragePluginHookVersions.Add(ragePluginHookVersion);
+                        // LOG PATH CHECK
+                        ////////////////////////////////////////////////////////////////////////////////////////////////
+                        var logPath = GetLogPath(fileContent, log);
+                        logPaths.Add(logPath);
 
-                // PRODUCT VERSION CHECK
-                ////////////////////////////////////////////////////////////////////////////////////////////////
-                var productVersion = GetProductVersion(fileContent, log);
-                productVersions.Add(productVersion);
+                        // RAGE PLUGIN HOOK VERSION CHECK
+                        ////////////////////////////////////////////////////////////////////////////////////////////////
+                        var ragePluginHookVersion = GetRagePluginHookVersion(fileContent, log);
+                        ragePluginHookVersions.Add(ragePluginHookVersion);
 
-                // PLATFORM CHECK
+                        // PRODUCT VERSION CHECK
+                        ////////////////////////////////////////////////////////////////////////////////////////////////
+                        var productVersion = GetProductVersion(fileContent, log);
+                        productVersions.Add(productVersion);
+
+                        // PLATFORM CHECK
+                        ////////////////////////////////////////////////////////////////////////////////////////////////
+                        var platform = GetPlatform(fileContent, log);
+                        platforms.Add(platform);
+                    }
+                    else
+                    {
+                        Console.WriteLine($"❌ Failed to read file: {log}\nfileContent was null");
+                    }
+                }
+
+                // Check if characters have changed
+                HasCharacterChanged(allCharacters);
+
+                // Check if log paths have changed
+                HasLogPathChanged(logPaths);
+
+                // Check if RAGE Plugin Hook versions have changed
+                HasRagePluginHookVersionChanged(ragePluginHookVersions);
+
+                // Check if product versions have changed
+                HasProductVersionChanged(productVersions);
+
+                // Check if platforms have changed
+                HasPlatformChanged(platforms, logs);
+
+                // DATEFORMAT CHECK
                 ////////////////////////////////////////////////////////////////////////////////////////////////
-                var platform = GetPlatform(fileContent, log);
-                platforms.Add(platform);
-                
+                DateFormatCheck(logs);
             }
             else
             {
-                Console.WriteLine($"❌ Failed to read file: {log}\nfileContent was null");
+                Console.WriteLine("❌ GetLogs returned null");
             }
+
+            Restarting:
+            Restart();
         }
-
-        // Check if characters have changed
-        HasCharacterChanged(allCharacters);
-
-        // Check if log paths have changed
-        HasLogPathChanged(logPaths);
-
-        // Check if RAGE Plugin Hook versions have changed
-        HasRagePluginHookVersionChanged(ragePluginHookVersions);
-
-        // Check if product versions have changed
-        HasProductVersionChanged(productVersions);
-
-        // Check if platforms have changed
-        HasPlatformChanged(platforms, logs);
-        
-        // DATEFORMAT CHECK
-        ////////////////////////////////////////////////////////////////////////////////////////////////
-        DateFormatCheck(logs);
-    }
-    else
-    {
-        Console.WriteLine("❌ GetLogs returned null");
-    }
-
-    Restarting:
-    Restart();
-}
-
     }
 }
