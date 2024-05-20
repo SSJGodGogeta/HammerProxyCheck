@@ -4,8 +4,8 @@ a) Compile it yourself and run it.
 
 b) Download the code, open the Tools folder and run the .exe file
 
-A folder named "LogsForProxyCheck" will automatically get created in the directory where the .exe is running. 
-Upload your RagePluginHook.logs in that folder
+A folder named "LogsForProxyCheck" will automatically get created in the directory where the .exe is running, once you start the .exe. 
+**Upload your RagePluginHook.logs in that folder**
 
 
 Every time you start this tool, it will ask you if you want to have a "detailed mode". 
