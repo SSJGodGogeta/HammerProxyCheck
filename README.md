@@ -1,6 +1,7 @@
 # How to use this tool:
 
 a) Compile it yourself and run it.
+
 b) Download the code, open the Tools folder and run the .exe file
 
 A folder named "LogsForProxyCheck" will automatically get created in the directory where the .exe is running. 
