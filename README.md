@@ -22,8 +22,8 @@ If Detailed Mode is enabled, you will see the file names that got removed. It wi
 - Checks if the Log path has changed
 - Checks if the characters have changed
 - Displays various informations and checks if the log is valid in general or if it got modified. (Full Detail available by enabling Detailed Mode)
+- Dateformat, GTA + RPH version and Platform checks.
 
 # Planned features:
-- Date, version and platform checks.
 - Piracy check
 - Percentage system (depending on what check fails, the probability of a proxy case rises)
