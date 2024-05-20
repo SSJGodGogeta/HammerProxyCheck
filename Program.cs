@@ -486,7 +486,6 @@ namespace HammerProxyCheck
                     }
                 }
             }
-
             Console.WriteLine();
 
             bool dateFormatChange = false;
