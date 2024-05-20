@@ -8,7 +8,7 @@ namespace HammerProxyCheck
         #region Base
 
         private static readonly string
-            Folder = Directory.GetCurrentDirectory() + @"\LogsForProxyCheck\";
+            Folder = Path.Combine(Directory.GetCurrentDirectory(), "LogsForProxyCheck");
 
         private static void DirectoryCheck()
         {
