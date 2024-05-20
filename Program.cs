@@ -15,7 +15,8 @@ namespace HammerProxyCheck
             if (!Directory.Exists(Folder)) Directory.CreateDirectory(Folder);
             if (Directory.Exists(Folder) && Directory.GetFiles(Folder).Length > 0)
             {
-                Console.WriteLine($"Going to PERMANENTLY delete old RagePluginHook.logs from: {Folder}\nPlease reply with Y if you want me to do that. Otherwise reply with N");
+                Console.WriteLine(
+                    $"Going to PERMANENTLY delete old RagePluginHook.logs from: {Folder}\nPlease reply with Y if you want me to do that. Otherwise reply with N");
                 switch (Console.ReadKey().Key)
                 {
                     case ConsoleKey.Y:
@@ -26,13 +27,17 @@ namespace HammerProxyCheck
                             {
                                 Console.WriteLine($"Deleting {file}");
                             }
+
                             File.Delete(file);
                         }
-                        Console.WriteLine($"Files deleted successfully!\nYou now have time to add your new RagePluginHook.logs into {Folder}\nOnce finished, press Enter to continue");
+
+                        Console.WriteLine(
+                            $"Files deleted successfully!\nYou now have time to add your new RagePluginHook.logs into {Folder}\nOnce finished, press Enter to continue");
                         while (Console.ReadKey().Key != ConsoleKey.Enter)
                         {
                             Console.WriteLine("\nYou pressed the wrong key. Press 'Enter' key to continue...");
                         }
+
                         Console.WriteLine("\nYou pressed 'Enter' key. Continuing...");
                         break;
                     case ConsoleKey.N:
@@ -151,6 +156,23 @@ namespace HammerProxyCheck
             }
 
             Console.OutputEncoding = Encoding.UTF8;
+        }
+
+        private static void Restart()
+        {
+            Console.WriteLine("Do you want to check again?");
+            switch (Console.ReadKey().Key)
+            {
+                case ConsoleKey.Y:
+                    Main();
+                    break;
+                case ConsoleKey.N:
+                    break;
+                default:
+                    Console.WriteLine("Invalid Input. Please answer with Y/N");
+                    Restart();
+                    break;
+            }
         }
 
         #endregion
@@ -595,6 +617,8 @@ namespace HammerProxyCheck
             {
                 Console.WriteLine("❌ GetLogs returned null");
             }
+            Restart();
+            Console.ReadLine();
         }
     }
 }
