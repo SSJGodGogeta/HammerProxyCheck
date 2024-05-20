@@ -370,11 +370,11 @@ namespace HammerProxyCheck
         {
             return RegexMatch(log, fileContent, @"(Started new log on (\d+\W\d+\W\d+))", group);
         }
-        static string GetDateFormat(string logLine, List<(string pattern, string format)> dateFormats)
+        static string? GetDateFormat(string logLine, List<(string pattern, string? format)> dateFormats)
         {
-            string closestFormat = null;
+            string? closestFormat = null;
             // Iterate through each date format and try to find matches
-            foreach ((string pattern, string format) in dateFormats)
+            foreach ((string pattern, string? format) in dateFormats)
             {
                 MatchCollection matches = Regex.Matches(logLine, pattern);
                 foreach (Match unused in matches)
@@ -397,9 +397,8 @@ namespace HammerProxyCheck
             }
 
             // Adding possible dateformats
-            List<(string pattern, string format)> dateFormats = new List<(string pattern, string format)>
-            {
-                // Standard date formats
+            List<(string pattern, string? format)> dateFormats =
+            [
                 (@"\d{4}-[0]?[1-9]-\d{1,2}", "yyyy-MM-dd"), // yyyy-MM-dd  2024-May-XX
                 (@"\d{4}-[1][0-2]-\d{1,2}", "yyyy-MM-dd"), // yyyy-MM-dd  2024-Oct-Dez-XX
 
@@ -426,13 +425,16 @@ namespace HammerProxyCheck
                 // Day and month with textual representation
                 (@"\d{1,2} (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) \d{4}",
                     "d MMM yyyy"), // d MMM yyyy (e.g., 1 Jan 2023)
+
                 (@"\d{1,2} (January|February|March|April|May|June|July|August|September|October|November|December) \d{4}",
                     "d MMMM yyyy"), // d MMMM yyyy (e.g., 1 January 2023)
                 // Add more day and month with textual representation formats as needed
-            };
+
+                (@"\d{2}/\d{2}/\d{4}", "dd/MM/yyyy") // dd/MM/yyyy
+
+            ];
 
             // Add your additional date format with the same pattern
-            dateFormats.Add((@"\d{2}/\d{2}/\d{4}", "dd/MM/yyyy")); // dd/MM/yyyy
             List<(string, string)> detectedDateFormats = [];
             foreach (var line in logLines)
             {
@@ -523,7 +525,7 @@ namespace HammerProxyCheck
                 }
                 else
                 {
-                    characterLogs[characterSet] = new List<string> { pattern.Log };
+                    characterLogs[characterSet] = [pattern.Log];
                 }
             }
 
@@ -597,7 +599,7 @@ namespace HammerProxyCheck
                     }
                     else
                     {
-                        logPathLogs[logPath] = new List<string> { pattern.Log };
+                        logPathLogs[logPath] = [pattern.Log];
                     }
                 }
             }
@@ -683,7 +685,7 @@ namespace HammerProxyCheck
                     }
                     else
                     {
-                        versionLogs[version] = new List<string> { pattern.Log };
+                        versionLogs[version] = [pattern.Log];
                     }
                 }
             }
@@ -748,7 +750,7 @@ namespace HammerProxyCheck
                     }
                     else
                     {
-                        versionLogs[version] = new List<string> { pattern.Log };
+                        versionLogs[version] = [pattern.Log];
                     }
                 }
             }
@@ -849,7 +851,7 @@ namespace HammerProxyCheck
                 }
                 else
                 {
-                    platformLogs[platform] = new List<string> { log };
+                    platformLogs[platform] = [log];
                 }
             }
 
@@ -925,7 +927,7 @@ private static void Main()
 
                 // LSPDFR CHARACTERS CHECK
                 ////////////////////////////////////////////////////////////////////////////////////////////////
-                allCharacters.AddRange(GetCharacters(new List<string> { log }));
+                allCharacters.AddRange(GetCharacters([log]));
 
                 // LOG PATH CHECK
                 ////////////////////////////////////////////////////////////////////////////////////////////////
