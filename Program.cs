@@ -3,6 +3,7 @@ using System.Text.RegularExpressions;
 
 namespace HammerProxyCheck
 {
+    //TODO: More checks
     static class Program
     {
         #region Base
@@ -69,7 +70,7 @@ namespace HammerProxyCheck
         {
             if (Directory.Exists(folder))
             {
-                Console.WriteLine($"✅ Directory {folder} exists");
+                Console.WriteLine($"\n✅ Directory {folder} exists");
                 List<string> files = new List<string>();
                 foreach (var file in Directory.GetFiles(folder))
                 {
@@ -140,7 +141,7 @@ namespace HammerProxyCheck
 
         private static void ConsoleSettings()
         {
-            Console.WriteLine("Detail Mode? Answer with Y/N");
+            Console.WriteLine("\nDetail Mode? Answer with Y/N");
             switch (Console.ReadKey().Key)
             {
                 case ConsoleKey.Y:
@@ -181,16 +182,16 @@ namespace HammerProxyCheck
 
         private static List<MatchedPattern> IsLogValid(string fileContent, string log)
         {
-            var matchedPattern = RegexMatch(log, fileContent, "Started new log on (\\d+\\W\\d+\\W\\d+)", 1);
+            var matchedPattern = RegexMatch(log, fileContent, "Started new log on (\\d+\\W\\d+\\W\\d+)", 1); //TODO
             var matchedPattern1 = RegexMatch(log, fileContent, "Log path: (.+)");
-            var matchedPattern2 = RegexMatch(log, fileContent, "Version: RAGE Plugin Hook v(.+) for Grand Theft Auto V",
+            var matchedPattern2 = RegexMatch(log, fileContent, "Version: RAGE Plugin Hook v(.+) for Grand Theft Auto V", //TODO
                 1);
             var matchedPattern3 = RegexMatch(log, fileContent, "Cleaning temp folder");
-            var matchedPattern4 = RegexMatch(log, fileContent, "Detected Windows (.+)!", 1);
+            var matchedPattern4 = RegexMatch(log, fileContent, "Detected Windows (.+)!", 1); //TODO
             var matchedPattern5 = RegexMatch(log, fileContent, "Checking game support");
-            var matchedPattern6 = RegexMatch(log, fileContent, "Product name: Grand Theft Auto V");
-            var matchedPattern7 = RegexMatch(log, fileContent, "Product version: (.+)", 1);
-            var matchedPattern8 = RegexMatch(log, fileContent, "Is steam version: (.+)", 1);
+            var matchedPattern6 = RegexMatch(log, fileContent, "Product name: Grand Theft Auto V"); //TODO
+            var matchedPattern7 = RegexMatch(log, fileContent, "Product version: (.+)", 1); //TODO
+            var matchedPattern8 = RegexMatch(log, fileContent, "Is steam version: (.+)", 1); //TODO
 
             List<MatchedPattern> listOfMatchedPatterns =
             [
@@ -568,8 +569,8 @@ namespace HammerProxyCheck
             {
                 if (logs.Count == 0)
                 {
-                    Console.WriteLine($"❌ There are no Logs in the Directory: {Folder}");
-                    return;
+                    Console.WriteLine($"❌ There are no Logs in the Directory: {Folder}\nJumping to the end...");
+                    goto Restarting;
                 }
 
                 foreach (var log in logs)
@@ -617,8 +618,8 @@ namespace HammerProxyCheck
             {
                 Console.WriteLine("❌ GetLogs returned null");
             }
+            Restarting:
             Restart();
-            Console.ReadLine();
         }
     }
 }
