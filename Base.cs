@@ -163,6 +163,27 @@ public class Base
         }
     }
 
+    internal static void ClearConsole()
+    {
+        Program.Logger.Info("Clear Console Output?");
+        Console.WriteLine("Do you want to clear the console output?\nAnswer with Y/N");
+        switch (Console.ReadKey().Key)
+        {
+            case ConsoleKey.Y:
+                Console.Clear();
+                Program.Logger.Info("Yes! Clearing...");
+                break;
+            case ConsoleKey.N:
+                Program.Logger.Info("No!");
+                break;
+            default:
+                Console.WriteLine("Invalid Input. Press Y/N");
+                Program.Logger.Info("Invalid Input. Press Y/N");
+                ClearConsole();
+                break;
+        }
+    }
+
     internal static void Restart()
     {
         Console.WriteLine("Do you want to check again?");
@@ -185,18 +206,18 @@ public class Base
     {
         switch (probability)
         {
-            case > 80:
+            case >= 80:
                 Console.WriteLine($@"💀  {probability}% chance of proxy support. Slam/Kill the user  💀");
                 break;
-            case > 50 and < 80:
+            case >= 50 and < 80:
                 Console.WriteLine(
                     $"🔍 {probability}% chance of proxy support. Enable detailed mode on the analysis and question the user. High chance!! 🔍");
                 break;
-            case > 25 and < 50:
+            case >= 25 and < 50:
                 Console.WriteLine(
                     $@"🕵️  {probability}% chance of proxy support. Have a detailed look on the analysis but go easy on the user  🕵️");
                 break;
-            case > 15 and < 25:
+            case >= 15 and < 25:
                 Console.WriteLine(
                     $"{probability}% chance of proxy support. Have a simple look. Could be a false positive but also due to piracy");
                 break;

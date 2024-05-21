@@ -100,6 +100,7 @@ namespace HammerProxyCheck
                     Console.WriteLine("❌ GetLogs returned null");
                 }
                 Logger.Info("END?");
+                Base.ClearConsole();
                 Restarting:
                 Base.Restart();
             }

@@ -293,9 +293,6 @@ public class Checks
                 }
             }
         }
-
-        Console.WriteLine();
-
         bool dateFormatChange = false;
         for (int i = 0; i < detectedDateFormats.Count - 1; i++)
         {
@@ -470,8 +467,8 @@ public class Checks
             }
 
             Console.WriteLine(!changesDetected
-                ? "\n✅ No log path changes detected across logs."
-                : "\n❗ Log path changes were detected");
+                ? "✅ No log path changes detected across logs."
+                : "❗ Log path changes were detected");
         }
         else
         {
@@ -558,8 +555,8 @@ public class Checks
             }
 
             Console.WriteLine(!changesDetected
-                ? "\n✅ No RAGE Plugin Hook version changes detected across logs."
-                : "\n❗ RAGE Plugin Hook version changes were detected");
+                ? "✅ No RAGE Plugin Hook version changes detected across logs."
+                : "❗ RAGE Plugin Hook version changes were detected");
         }
         else
         {
@@ -626,8 +623,8 @@ public class Checks
             }
 
             Console.WriteLine(!changesDetected
-                ? "\n✅ No product version changes detected across logs."
-                : "\n❗ Product version changes were detected");
+                ? "✅ No product version changes detected across logs."
+                : "❗ Product version changes were detected");
         }
         else
         {
@@ -747,7 +744,6 @@ public class Checks
 
     internal static bool IsPossiblyPirated(List<string> logs)
     {
-        Console.WriteLine();
         var isPirated = false;
         var isPiratedReturn = false;
         foreach (var log in logs)
@@ -763,8 +759,8 @@ public class Checks
             if (Base.DetailMode)
             {
                 Console.WriteLine(isPirated
-                    ? $@"⚠️ ❗  Possible piracy case detected in log:	{filename}  ❗ ⚠️"
-                    : $"✅  No piracy case detected in log:\t{filename}");
+                    ? $"\n⚠️ ❗  Possible piracy case detected in log:	{filename}  ❗ ⚠️"
+                    : $"\n✅  No piracy case detected in log:\t{filename}");
             }
 
             isPirated = false;
