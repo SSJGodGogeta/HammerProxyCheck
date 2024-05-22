@@ -1,6 +1,14 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HammerProxyCheck", "HammerProxyCheck.csproj", "{05FEE1B7-3005-4388-A4E6-2B8622B500D7}"
+# Visual Studio Version 17
+VisualStudioVersion = 17.9.34714.143
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HammerProxyCheck", "HammerProxyCheck.csproj", "{05FEE1B7-3005-4388-A4E6-2B8622B500D7}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Projektmappenelemente", "Projektmappenelemente", "{3A426ECE-3F7B-44CE-8EFD-7F68650E2F86}"
+	ProjectSection(SolutionItems) = preProject
+		ULSS_Original.ico = ULSS_Original.ico
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -12,5 +20,8 @@ Global
 		{05FEE1B7-3005-4388-A4E6-2B8622B500D7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{05FEE1B7-3005-4388-A4E6-2B8622B500D7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{05FEE1B7-3005-4388-A4E6-2B8622B500D7}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
 	EndGlobalSection
 EndGlobal
