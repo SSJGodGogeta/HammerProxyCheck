@@ -221,9 +221,12 @@ public class Base
                 Console.WriteLine(
                     $"{probability}% chance of proxy support. Have a simple look. Could be a false positive but also due to piracy");
                 break;
-            case < 15:
+            case < 15 and >=5:
                 Console.WriteLine(
                     $"{probability}% chance of proxy support. Could be a false positive. Can be triggered easily if character or/and gta or/and rph version changed");
+                break;
+            case  0:
+                Console.WriteLine($"✅ {probability}% chance of proxy support. Programm did not detect anything. No Proxy ✅");
                 break;
         }
     }
