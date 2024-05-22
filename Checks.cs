@@ -4,7 +4,7 @@ namespace HammerProxyCheck;
 
 public class Checks
 {
-    internal static bool IsLogValid(string fileContent, string log)
+    internal static bool IsLogValid(string? fileContent, string log)
     {
         var matchedPattern = GetDate(fileContent, log, 2);
         var matchedPattern1 = GetLogPath(fileContent, log);
@@ -198,7 +198,7 @@ public class Checks
 
     #region DateFormat
 
-    private static Base.MatchedPattern GetDate(string fileContent, string log, int group)
+    private static Base.MatchedPattern GetDate(string? fileContent, string log, int group)
     {
         return Base.RegexMatch(log, fileContent, @"(Started new log on (\d+\W\d+\W\d+))", group);
     }
@@ -316,7 +316,7 @@ public class Checks
 
     #region Character
 
-    private static void GetCharacters(string fileContent, string log)
+    private static void GetCharacters(string? fileContent, string log)
     {
         var matchedPattern = Base.RegexMatch(log, fileContent, "Adding (.+) as character", 1, true);
         if (Base.DetailMode)
@@ -365,11 +365,11 @@ public class Checks
 
             if (characterLogs.TryGetValue(characterSet, out var logs))
             {
-                logs.Add(pattern.Log);
+                if (pattern.Log != null) logs.Add(pattern.Log);
             }
             else
             {
-                characterLogs[characterSet] = [pattern.Log];
+                if (pattern.Log != null) characterLogs[characterSet] = [pattern.Log];
             }
         }
 
@@ -442,11 +442,11 @@ public class Checks
 
                 if (logPathLogs.TryGetValue(logPath, out var logs))
                 {
-                    logs.Add(pattern.Log);
+                    if (pattern.Log != null) logs.Add(pattern.Log);
                 }
                 else
                 {
-                    logPathLogs[logPath] = [pattern.Log];
+                    if (pattern.Log != null) logPathLogs[logPath] = [pattern.Log];
                 }
             }
         }
@@ -501,7 +501,7 @@ public class Checks
         return changesDetected;
     }
 
-    internal static Base.MatchedPattern GetLogPath(string fileContent, string log)
+    internal static Base.MatchedPattern GetLogPath(string? fileContent, string log)
     {
         var matchedPattern = Base.RegexMatch(log, fileContent, @"Log path: (.+)", 1);
         return matchedPattern;
@@ -511,12 +511,12 @@ public class Checks
 
     #region GTA and RPH Version
 
-    internal static Base.MatchedPattern GetRagePluginHookVersion(string fileContent, string log)
+    internal static Base.MatchedPattern GetRagePluginHookVersion(string? fileContent, string log)
     {
         return Base.RegexMatch(log, fileContent, @"Version: RAGE Plugin Hook v(.+) for Grand Theft Auto V", 1);
     }
 
-    internal static Base.MatchedPattern GetProductVersion(string fileContent, string log)
+    internal static Base.MatchedPattern GetProductVersion(string? fileContent, string log)
     {
         return Base.RegexMatch(log, fileContent, @"Product version: (.+)", 1);
     }
@@ -531,11 +531,11 @@ public class Checks
                 var version = pattern.LogMatch.First();
                 if (versionLogs.TryGetValue(version, out var logs))
                 {
-                    logs.Add(pattern.Log);
+                    if (pattern.Log != null) logs.Add(pattern.Log);
                 }
                 else
                 {
-                    versionLogs[version] = [pattern.Log];
+                    if (pattern.Log != null) versionLogs[version] = [pattern.Log];
                 }
             }
         }
@@ -599,11 +599,11 @@ public class Checks
                 var version = pattern.LogMatch.First();
                 if (versionLogs.TryGetValue(version, out var logs))
                 {
-                    logs.Add(pattern.Log);
+                    if (pattern.Log != null) logs.Add(pattern.Log);
                 }
                 else
                 {
-                    versionLogs[version] = [pattern.Log];
+                    if (pattern.Log != null) versionLogs[version] = [pattern.Log];
                 }
             }
         }
@@ -661,7 +661,7 @@ public class Checks
 
     #region Platform
 
-    private static Base.MatchedPattern GetIsSteamVersion(string fileContent, string log)
+    private static Base.MatchedPattern GetIsSteamVersion(string? fileContent, string log)
     {
         return Base.RegexMatch(log, fileContent, @"Is steam version: (True|False)", 1);
     }
@@ -674,7 +674,7 @@ public class Checks
         Unknown
     }
 
-    internal static Platform GetPlatform(string fileContent, string log)
+    internal static Platform GetPlatform(string? fileContent, string log)
     {
         Base.MatchedPattern logpath = GetLogPath(fileContent, log);
         Base.MatchedPattern isSteamVersion = GetIsSteamVersion(fileContent, log);

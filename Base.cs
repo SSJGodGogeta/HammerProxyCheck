@@ -113,7 +113,7 @@ public class Base
     /// <param name="i">Group Value to be returned</param>
     /// <param name="removeDupes">If true, removes duplicate entries in the MatchedPattern.LogMatch List</param>
     /// <returns>returns if the Regex matches and the group value at index i</returns>
-    internal static MatchedPattern RegexMatch(string log, string logContent, string regex, int i = 0,
+    internal static MatchedPattern RegexMatch(string log, string? logContent, string regex, int i = 0,
         bool removeDupes = false)
     {
         var mp = new MatchedPattern
@@ -121,22 +121,23 @@ public class Base
             IsMatch = false,
             Log = log
         };
-        foreach (Match match in Regex.Matches(logContent, regex))
-        {
-            if (!removeDupes)
+        if (logContent != null)
+            foreach (Match match in Regex.Matches(logContent, regex))
             {
-                mp.IsMatch = true;
-                mp.LogMatch.Add(match.Groups[i].Value);
-            }
-            else
-            {
-                mp.IsMatch = true;
-                if (!mp.LogMatch.Contains(match.Groups[i].Value))
+                if (!removeDupes)
                 {
+                    mp.IsMatch = true;
                     mp.LogMatch.Add(match.Groups[i].Value);
                 }
+                else
+                {
+                    mp.IsMatch = true;
+                    if (!mp.LogMatch.Contains(match.Groups[i].Value))
+                    {
+                        mp.LogMatch.Add(match.Groups[i].Value);
+                    }
+                }
             }
-        }
 
         return mp;
     }
@@ -226,7 +227,7 @@ public class Base
                     $"{probability}% chance of proxy support. Could be a false positive. Can be triggered easily if character or/and gta or/and rph version changed");
                 break;
             case  0:
-                Console.WriteLine($"✅ {probability}% chance of proxy support. Programm did not detect anything. No Proxy ✅");
+                Console.WriteLine($"✅ {probability}% chance of proxy support. Program did not detect anything. No Proxy ✅");
                 break;
         }
     }
