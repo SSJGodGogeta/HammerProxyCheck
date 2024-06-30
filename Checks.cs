@@ -266,8 +266,9 @@ public class Checks
             (@"\d{1,2} (January|February|March|April|May|June|July|August|September|October|November|December) \d{4}",
                 "d MMMM yyyy"), // d MMMM yyyy (e.g., 1 January 2023)
             // Add more day and month with textual representation formats as needed
-
-            (@"\d{2}/\d{2}/\d{4}", "dd/MM/yyyy") // dd/MM/yyyy
+            
+            (@"\d{1,2}/\[0]?[1-9]/\\d{4}", "dd/MM/yyyy"), // dd/MM/yyyy
+            (@"\d{1,2}/\[1][0-2]/\\d{4}", "dd/MM/yyyy"), // dd/MM/yyyy
         ];
 
         // Add your additional date format with the same pattern
